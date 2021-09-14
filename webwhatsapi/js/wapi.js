@@ -25,7 +25,8 @@ if (!window.Store) {
                 { id: "UserConstructor", conditions: (module) => (module.default && module.default.prototype && module.default.prototype.isServer && module.default.prototype.isUser) ? module.default : null },
                 { id: "SendTextMsgToChat", conditions: (module) => (module.sendTextMsgToChat) ? module.sendTextMsgToChat : null },
                 { id: "SendSeen", conditions: (module) => (module.sendSeen) ? module.sendSeen : null },
-                { id: "sendDelete", conditions: (module) => (module.sendDelete) ? module.sendDelete : null }
+                { id: "sendDelete", conditions: (module) => (module.sendDelete) ? module.sendDelete : null },
+                { id: 'FindChat', conditions: (module) => (module && module.findChat)?module : null}
             ];
         for (let idx in modules) {
             if ((typeof modules[idx] === "object") && (modules[idx] !== null)) {
@@ -296,7 +297,7 @@ window.WAPI.getAllGroups = function (done) {
  */
 window.WAPI.getChat = function (id, done) {
     id = typeof id == "string" ? id : id._serialized;
-    const found = window.Store.Chat.get(id);
+    var found = window.Store.Chat.get(id);
     found.sendMessage = (found.sendMessage) ? found.sendMessage : function () { return window.Store.sendMessage.apply(this, arguments); };
     if (done !== undefined) done(found);
     return found;
@@ -735,11 +736,11 @@ window.WAPI.sendMessageToID = function (id, message, done) {
         window.getContact = (id) => {
             return Store.WapQuery.queryExist(id);
         }
-        window.getContact(id).then(contact => {
+        window.getContact(id, contact => {
             if (contact.status === 404) {
                 done(true);
             } else {
-                Store.Chat.find(contact.jid).then(chat => {
+                Store.FindChat.findChat(contact.id).then(chat => {
                     chat.sendMessage(message);
                     return true;
                 }).catch(reject => {
@@ -1231,7 +1232,7 @@ window.WAPI.sendImage = function (imgBase64, chatid, filename, caption, done) {
 //var idUser = new window.Store.UserConstructor(chatid);
 var idUser = new window.Store.UserConstructor(chatid, { intentionallyUsePrivateConstructor: true });
 // create new chat
-return Store.Chat.find(idUser).then((chat) => {
+return Store.FindChat.findChat(idUser).then((chat) => {
     var mediaBlob = window.WAPI.base64ImageToFile(imgBase64, filename);
     var mc = new Store.MediaCollection(chat);
     mc.processAttachments([{file: mediaBlob}, 1], chat, 1).then(() => {
