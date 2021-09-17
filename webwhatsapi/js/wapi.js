@@ -736,11 +736,11 @@ window.WAPI.sendMessageToID = function (id, message, done) {
         window.getContact = (id) => {
             return Store.WapQuery.queryExist(id);
         }
-        window.getContact(id, contact => {
+        window.getContact(id).then(contact => {
             if (contact.status === 404) {
                 done(true);
             } else {
-                Store.FindChat.findChat(contact.id).then(chat => {
+                Store.FindChat.findChat(contact.jid).then(chat => {
                     chat.sendMessage(message);
                     return true;
                 }).catch(reject => {
